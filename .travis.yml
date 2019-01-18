@@ -1,4 +1,0 @@
-language: scala
-scala:
-   - 2.11.11
-script: ant jar && bash bin/test.sh
