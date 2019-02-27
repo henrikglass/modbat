@@ -248,7 +248,7 @@ object Modbat {
   def wrapRun = {
     Console.withErr(err) {
       Console.withOut(out) {
-	 val model = MBT.launch(null)
+	 val model = MBT.launch(null)._1 // Should test that ._2 is 0 before cont.
 	 val result = exploreModel(model)
 	 MBT.cleanup()
 	 result

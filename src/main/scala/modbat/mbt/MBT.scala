@@ -256,27 +256,25 @@ object MBT {
     }
   }
 
-  def mkModel(modelInstance: Model) = {
+  def mkModel(modelInstance: Model): (Model, Int) = {
     try {
       if (modelInstance != null) {
-	modelInstance
+	(modelInstance, 0)
       } else {
 	assert(Transition.pendingTransitions.isEmpty)
 	val cons = findConstructor(modelClass.asInstanceOf[Class[Model]])
-	cons.newInstance().asInstanceOf[Model]
+	(cons.newInstance().asInstanceOf[Model], 0)
       }
     } catch {
       case c: ClassCastException => {
 	Log.error("Model class does not extend Model.")
 	Log.error("Check if the right class was specified.")
-	System.exit(1)
-	null
+    return (null, 1)
       }
       case e: InstantiationException => {
 	Log.error("Cannot instantiate model class.")
 	Log.error("The class must not be abstract or an interface.")
-	System.exit(1)
-	null
+    return (null, 1)
       }
       case e: InvocationTargetException => {
 	Log.error("Exception in default (nullary) constructor of main model.")
@@ -289,8 +287,7 @@ object MBT {
 	  Log.error(cause.toString)
 	  printStackTrace(cause.getStackTrace)
 	}
-	System.exit(1)
-	null
+    return (null, 1)
       }
     }
   }
@@ -299,18 +296,22 @@ object MBT {
   // model instance, or from runTests, where a model instance
   // and the transition system are created using reflection
   // if modelInstance == null: initial model
-  def launch(modelInstance: Model): MBT = {
+  def launch(modelInstance: Model): (MBT, Int) = {
     val model = mkModel(modelInstance)
+    // If mkModel fails return exit code.
+    if (model._2 == 1) {
+      return (null, 1)
+    }
     if (Transition.pendingTransitions.isEmpty) {
       Log.error("Model " + model.getClass.getName + " has no transitions.")
       Log.error("Make sure at least one transition exists of type")
       Log.error("  \"a\" -> \"b\" := { code } // or, for an empty transition:")
       Log.error("  \"a\" -> \"b\" := skip")
-      System.exit(1)
+      return (null, 1)
     }
-    val inst = new MBT(model, Transition.getTransitions)
+    val inst = new MBT(model._1, Transition.getTransitions)
     Transition.clear
-    inst.addAndLaunch(modelInstance == null)
+    (inst.addAndLaunch(modelInstance == null), 0)
   }
 
   def printStackTrace(trace: Array[StackTraceElement]) {
