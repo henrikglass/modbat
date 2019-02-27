@@ -311,7 +311,7 @@ object MBT {
     }
     val inst = new MBT(model._1, Transition.getTransitions)
     Transition.clear
-    (inst.addAndLaunch(modelInstance == null), 0)
+    inst.addAndLaunch(modelInstance == null)
   }
 
   def printStackTrace(trace: Array[StackTraceElement]) {
@@ -433,7 +433,7 @@ class MBT (val model: Model, val trans: List[Transition]) {
     }
   }
 
-  def addAndLaunch(firstLaunch: Boolean) = {
+  def addAndLaunch(firstLaunch: Boolean): (MBT, Int) = {
     if (Modbat.firstInstance.contains(className)) {
       val master =
 	initChildInstance(className, trans.toArray)
@@ -452,8 +452,8 @@ class MBT (val model: Model, val trans: List[Transition]) {
     if (model.isInstanceOf[Observer]) {
       isObserver = true
       if (firstLaunch) {
-	Log.error("Primary model must not be of type Observer.")
-	System.exit(1)
+        Log.error("Primary model must not be of type Observer.")
+        return (this, 1)
       }
       warnAboutNonDefaultWeights
     }
@@ -461,7 +461,7 @@ class MBT (val model: Model, val trans: List[Transition]) {
     MBT.launchedModelInst += model
     currentState = initialState
     StateCoverage.cover(initialState)
-    this
+    (this, 0)
   }
 
   def join(modelInstance: Model) {
