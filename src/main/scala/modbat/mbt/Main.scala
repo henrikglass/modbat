@@ -42,7 +42,10 @@ object Main {
       }
     }
 
-    setup(modelClassName) // TODO: refactor into case code below once needed
+    // If there is a failure during setup, exit the program
+    if(setup(modelClassName) == 1) {
+      return 1
+    } // TODO: refactor into case code below once needed
 
     Modbat.init
     /* execute */
@@ -59,18 +62,18 @@ object Main {
     // TODO (issue #27): Dotify.dotify() and Modbat.explore() should use return code
   }
 
-  def setup(modelClassName: String) {
+  def setup(modelClassName: String) = {
     /* configure components */
     Log.setLevel(config.logLevel)
     MBT.enableStackTrace = config.printStackTrace
     MBT.maybeProbability = config.maybeProbability
 
     MBT.configClassLoader(config.classpath)
-    MBT.loadModelClass(modelClassName)
     MBT.setRNG(config.randomSeed)
     MBT.isOffline = false
     MBT.runBefore = config.setup
     MBT.runAfter = config.cleanup
     MBT.precondAsFailure = config.precondAsFailure
+    MBT.loadModelClass(modelClassName)
   }
 }

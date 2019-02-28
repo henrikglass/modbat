@@ -203,17 +203,18 @@ object MBT {
 
   def getLaunchedModel(i: Int) = launchedModels(i)
 
-  def loadModelClass(className: String) {
+  def loadModelClass(className: String): Int = {
     /* load model class */
     try {
       val classloader =
 	new URLClassLoader(classLoaderURLs,
 			   Thread.currentThread().getContextClassLoader())
       modelClass = classloader.loadClass(className)
+      0
     } catch {
       case e: ClassNotFoundException => {
 	Log.error("Class \"" + className + "\" not found.")
-	System.exit(1)
+        1
       }
     }
   }
@@ -242,7 +243,7 @@ object MBT {
 
   def findConstructor(c: Class[Model]) = {
     try {
-      c.getConstructor()
+      (c.getConstructor(), 0)
     } catch {
       case e: NoSuchMethodException => {
 	Log.error("No suitable constructor found.")
@@ -250,8 +251,7 @@ object MBT {
 		  "to instantiate the primary model.")
 	Log.error("Consider adding a constructor variant:")
 	Log.error("  def this() = this(...)")
-	System.exit(1)
-	null
+        (null, 1)
       }
     }
   }
@@ -262,7 +262,10 @@ object MBT {
 	(modelInstance, 0)
       } else {
 	assert(Transition.pendingTransitions.isEmpty)
-	val cons = findConstructor(modelClass.asInstanceOf[Class[Model]])
+	val (cons, ret) = findConstructor(modelClass.asInstanceOf[Class[Model]])
+        if(ret == 1) {
+          return (cons, ret)
+        }
 	(cons.newInstance().asInstanceOf[Model], 0)
       }
     } catch {
