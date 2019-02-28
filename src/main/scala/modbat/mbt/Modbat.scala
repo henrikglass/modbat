@@ -253,8 +253,8 @@ object Modbat {
       Console.withOut(out) {
 	    val model = MBT.launch(null) // Should test that ._2 is 0 before cont.
 	    if(model._2 != 0) {
-          System.exit(1)
-          //return (null, 1)
+          //System.exit(1)
+          return (null, 1)
         }
         val result = exploreModel(model._1)
 	    MBT.cleanup()
