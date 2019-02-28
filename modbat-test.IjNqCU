@@ -1,0 +1,12 @@
+[WARNING] java.lang.AssertionError: assertion failed occurred, aborting.
+[ERROR] java.lang.AssertionError: assertion failed
+[ERROR] 	at scala.Predef$.assert(Predef.scala:151)
+[ERROR] 	at modbat.dsl.Model$.assert(Model.scala:28)
+[ERROR] 	at modbat.dsl.Model$class.assert(Model.scala:39)
+[ERROR] 	at modbat.examples.JavaNioServerSocket.assert(JavaNioServerSocket.scala:12)
+[ERROR] 	at modbat.examples.JavaNioServerSocket.readFrom(JavaNioServerSocket.scala:59)
+[ERROR] 	at modbat.examples.JavaNioServerSocket$$anonfun$9.apply$mcV$sp(JavaNioServerSocket.scala:102)
+[ERROR] 	at modbat.examples.JavaNioServerSocket$$anonfun$9.apply(JavaNioServerSocket.scala:102)
+[ERROR] 	at modbat.examples.JavaNioServerSocket$$anonfun$9.apply(JavaNioServerSocket.scala:102)
+[WARNING] Error found, model trace:
+[WARNING] modbat/examples/JavaNioServerSocket.scala:72: open

@@ -49,7 +49,7 @@ object Main {
 
     Modbat.init
     /* execute */
-    config.mode match {
+    val _ret = config.mode match {
       case "dot" =>
         val mbt_launch = MBT.launch(null)
         // if MBT.launch fails return exit code.
@@ -59,6 +59,8 @@ object Main {
 	new Dotify(mbt_launch._1, modelClassName + ".dot").dotify()
       case _ => Modbat.explore(config.nRuns)
     }
+
+    return _ret
     // TODO (issue #27): Dotify.dotify() and Modbat.explore() should use return code
   }
 
