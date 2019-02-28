@@ -264,7 +264,7 @@ object MBT {
 	assert(Transition.pendingTransitions.isEmpty)
 	val (cons, ret) = findConstructor(modelClass.asInstanceOf[Class[Model]])
         if(ret == 1) {
-          return (cons.newInstance().asInstanceOf[Model], ret)
+          return (null, ret)
         }
 	(cons.newInstance().asInstanceOf[Model], 0)
       }
@@ -300,9 +300,9 @@ object MBT {
   // and the transition system are created using reflection
   // if modelInstance == null: initial model
   def launch(modelInstance: Model): (MBT, Int) = {
-    val model = mkModel(modelInstance)
+    val (model, ret) = mkModel(modelInstance)
     // If mkModel fails return exit code.
-    if (model._2 == 1) {
+    if (ret == 1) {
       return (null, 1)
     }
     if (Transition.pendingTransitions.isEmpty) {
@@ -312,7 +312,7 @@ object MBT {
       Log.error("  \"a\" -> \"b\" := skip")
       return (null, 1)
     }
-    val inst = new MBT(model._1, Transition.getTransitions)
+    val inst = new MBT(model, Transition.getTransitions)
     Transition.clear
     inst.addAndLaunch(modelInstance == null)
   }
