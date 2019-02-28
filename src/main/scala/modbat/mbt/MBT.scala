@@ -264,7 +264,7 @@ object MBT {
 	assert(Transition.pendingTransitions.isEmpty)
 	val (cons, ret) = findConstructor(modelClass.asInstanceOf[Class[Model]])
         if(ret == 1) {
-          return (cons.newInstance().asInstanceOf[Model], ret)
+          return (null, ret)
         }
 	(cons.newInstance().asInstanceOf[Model], 0)
       }
