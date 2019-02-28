@@ -42,30 +42,40 @@ object Main {
       }
     }
 
-    setup(modelClassName) // TODO: refactor into case code below once needed
+    // If there is a failure during setup, exit the program
+    if(setup(modelClassName) == 1) {
+      return 1
+    } // TODO: refactor into case code below once needed
 
     Modbat.init
     /* execute */
-    config.mode match {
+    val _ret = config.mode match {
       case "dot" =>
-	new Dotify(MBT.launch(null), modelClassName + ".dot").dotify()
+        val mbt_launch = MBT.launch(null)
+        // if MBT.launch fails return exit code.
+        if(mbt_launch._2 == 1) {
+          return 1
+        }
+	new Dotify(mbt_launch._1, modelClassName + ".dot").dotify()
       case _ => Modbat.explore(config.nRuns)
     }
+
+    return _ret
     // TODO (issue #27): Dotify.dotify() and Modbat.explore() should use return code
   }
 
-  def setup(modelClassName: String) {
+  def setup(modelClassName: String) = {
     /* configure components */
     Log.setLevel(config.logLevel)
     MBT.enableStackTrace = config.printStackTrace
     MBT.maybeProbability = config.maybeProbability
 
     MBT.configClassLoader(config.classpath)
-    MBT.loadModelClass(modelClassName)
     MBT.setRNG(config.randomSeed)
     MBT.isOffline = false
     MBT.runBefore = config.setup
     MBT.runAfter = config.cleanup
     MBT.precondAsFailure = config.precondAsFailure
+    MBT.loadModelClass(modelClassName)
   }
 }

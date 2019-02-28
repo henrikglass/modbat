@@ -203,17 +203,18 @@ object MBT {
 
   def getLaunchedModel(i: Int) = launchedModels(i)
 
-  def loadModelClass(className: String) {
+  def loadModelClass(className: String): Int = {
     /* load model class */
     try {
       val classloader =
 	new URLClassLoader(classLoaderURLs,
 			   Thread.currentThread().getContextClassLoader())
       modelClass = classloader.loadClass(className)
+      0
     } catch {
       case e: ClassNotFoundException => {
 	Log.error("Class \"" + className + "\" not found.")
-	System.exit(1)
+        1
       }
     }
   }
@@ -242,7 +243,7 @@ object MBT {
 
   def findConstructor(c: Class[Model]) = {
     try {
-      c.getConstructor()
+      (c.getConstructor(), 0)
     } catch {
       case e: NoSuchMethodException => {
 	Log.error("No suitable constructor found.")
@@ -250,33 +251,33 @@ object MBT {
 		  "to instantiate the primary model.")
 	Log.error("Consider adding a constructor variant:")
 	Log.error("  def this() = this(...)")
-	System.exit(1)
-	null
+        (null, 1)
       }
     }
   }
 
-  def mkModel(modelInstance: Model) = {
+  def mkModel(modelInstance: Model): (Model, Int) = {
     try {
       if (modelInstance != null) {
-	modelInstance
+	(modelInstance, 0)
       } else {
 	assert(Transition.pendingTransitions.isEmpty)
-	val cons = findConstructor(modelClass.asInstanceOf[Class[Model]])
-	cons.newInstance().asInstanceOf[Model]
+	val (cons, ret) = findConstructor(modelClass.asInstanceOf[Class[Model]])
+        if(ret == 1) {
+          return (null, ret)
+        }
+	(cons.newInstance().asInstanceOf[Model], 0)
       }
     } catch {
       case c: ClassCastException => {
 	Log.error("Model class does not extend Model.")
 	Log.error("Check if the right class was specified.")
-	System.exit(1)
-	null
+        return (null, 1)
       }
       case e: InstantiationException => {
 	Log.error("Cannot instantiate model class.")
 	Log.error("The class must not be abstract or an interface.")
-	System.exit(1)
-	null
+        return (null, 1)
       }
       case e: InvocationTargetException => {
 	Log.error("Exception in default (nullary) constructor of main model.")
@@ -289,8 +290,7 @@ object MBT {
 	  Log.error(cause.toString)
 	  printStackTrace(cause.getStackTrace)
 	}
-	System.exit(1)
-	null
+        return (null, 1)
       }
     }
   }
@@ -299,14 +299,18 @@ object MBT {
   // model instance, or from runTests, where a model instance
   // and the transition system are created using reflection
   // if modelInstance == null: initial model
-  def launch(modelInstance: Model): MBT = {
-    val model = mkModel(modelInstance)
+  def launch(modelInstance: Model): (MBT, Int) = {
+    val (model, ret) = mkModel(modelInstance)
+    // If mkModel fails return exit code.
+    if (ret == 1) {
+      return (null, 1)
+    }
     if (Transition.pendingTransitions.isEmpty) {
       Log.error("Model " + model.getClass.getName + " has no transitions.")
       Log.error("Make sure at least one transition exists of type")
       Log.error("  \"a\" -> \"b\" := { code } // or, for an empty transition:")
       Log.error("  \"a\" -> \"b\" := skip")
-      System.exit(1)
+      return (null, 1)
     }
     val inst = new MBT(model, Transition.getTransitions)
     Transition.clear
@@ -432,7 +436,7 @@ class MBT (val model: Model, val trans: List[Transition]) {
     }
   }
 
-  def addAndLaunch(firstLaunch: Boolean) = {
+  def addAndLaunch(firstLaunch: Boolean): (MBT, Int) = {
     if (Modbat.firstInstance.contains(className)) {
       val master =
 	initChildInstance(className, trans.toArray)
@@ -451,8 +455,8 @@ class MBT (val model: Model, val trans: List[Transition]) {
     if (model.isInstanceOf[Observer]) {
       isObserver = true
       if (firstLaunch) {
-	Log.error("Primary model must not be of type Observer.")
-	System.exit(1)
+        Log.error("Primary model must not be of type Observer.")
+        return (this, 1)
       }
       warnAboutNonDefaultWeights
     }
@@ -460,7 +464,7 @@ class MBT (val model: Model, val trans: List[Transition]) {
     MBT.launchedModelInst += model
     currentState = initialState
     StateCoverage.cover(initialState)
-    this
+    (this, 0)
   }
 
   def join(modelInstance: Model) {

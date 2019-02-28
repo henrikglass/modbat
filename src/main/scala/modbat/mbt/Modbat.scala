@@ -222,13 +222,16 @@ object Modbat {
     }
   }
 
-  def explore(n: Int) = {
+  def explore(n: Int): Int = {
     init
     if (!isUnitTest) {
       Runtime.getRuntime().addShutdownHook(ShutdownHandler)
     }
 
-    runTests(n)
+    val ret = runTests(n)
+    if(ret != 0) {
+      return ret
+    }
 
     coverage
     appState = AppShutdown
@@ -245,13 +248,16 @@ object Modbat {
     rng.z << 32 | rng.w
   }
 
-  def wrapRun = {
+  def wrapRun: (TransitionResult, Int) = {
     Console.withErr(err) {
       Console.withOut(out) {
-	 val model = MBT.launch(null)
-	 val result = exploreModel(model)
-	 MBT.cleanup()
-	 result
+        val model = MBT.launch(null) // Should test that ._2 is 0 before cont.
+	if(model._2 != 0) {
+          return (null, 1)
+        }
+        val result = exploreModel(model._1)
+	MBT.cleanup()
+	(result, 0)
       }
     }
   }
@@ -262,7 +268,7 @@ object Modbat {
     wrapRun
   }
 
-  def runTests(n: Int) {
+  def runTests(n: Int): Int = {
    for (i <- 1 to n) {
       MBT.rng = masterRNG.clone
       // advance RNG by one step for each path
@@ -271,36 +277,41 @@ object Modbat {
       randomSeed = getRandomSeed
       val seed = randomSeed.toHexString
       failed match {
-	case 0 => Console.printf("%8d %16s", i, seed)
-	case 1 => Console.printf("%8d %16s, one test failed.", i, seed)
-	case _ => Console.printf("%8d %16s, %d tests failed.",
+	    case 0 => Console.printf("%8d %16s", i, seed)
+	    case 1 => Console.printf("%8d %16s, one test failed.", i, seed)
+	    case _ => Console.printf("%8d %16s, %d tests failed.",
 				 i, seed, failed)
       }
       logFile = Main.config.logPath + "/" + seed + ".log"
       errFile = Main.config.logPath + "/" + seed + ".err"
       if (Main.config.redirectOut) {
-	out = new PrintStream(new FileOutputStream(logFile))
-	System.setOut(out)
+	    out = new PrintStream(new FileOutputStream(logFile))
+	    System.setOut(out)
 
-	err = new PrintStream(new FileOutputStream(errFile), true)
-	System.setErr(err)
+	    err = new PrintStream(new FileOutputStream(errFile), true)
+	    System.setErr(err)
       } else {
-	Console.println
+            Console.println
       }
       MBT.checkDuplicates = (i == 1)
-      val result = runTest
+      val (result, ret) = runTest
+      if(ret == 1) { 
+            return 1
+      }
       count = i
       restoreChannels
       if (TransitionResult.isErr(result)) {
-	failed += 1
+	    failed += 1
       } else {
-	assert (result == Ok())
+	    assert (result == Ok())
       }
       masterRNG.nextInt(false) // get one iteration in RNG
       if (TransitionResult.isErr(result) && Main.config.stopOnFailure) {
-	return
+	    return 0
       }
     }
+    // Everything succeeds
+    0
   }
 
   def showTrans(t: RecordedTransition) = {
