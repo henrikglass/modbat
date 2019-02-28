@@ -272,12 +272,12 @@ object MBT {
       case c: ClassCastException => {
 	Log.error("Model class does not extend Model.")
 	Log.error("Check if the right class was specified.")
-    return (null, 1)
+        return (null, 1)
       }
       case e: InstantiationException => {
 	Log.error("Cannot instantiate model class.")
 	Log.error("The class must not be abstract or an interface.")
-    return (null, 1)
+        return (null, 1)
       }
       case e: InvocationTargetException => {
 	Log.error("Exception in default (nullary) constructor of main model.")
@@ -290,7 +290,7 @@ object MBT {
 	  Log.error(cause.toString)
 	  printStackTrace(cause.getStackTrace)
 	}
-    return (null, 1)
+        return (null, 1)
       }
     }
   }

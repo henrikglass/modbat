@@ -251,14 +251,13 @@ object Modbat {
   def wrapRun: (TransitionResult, Int) = {
     Console.withErr(err) {
       Console.withOut(out) {
-	    val model = MBT.launch(null) // Should test that ._2 is 0 before cont.
-	    if(model._2 != 0) {
-          //System.exit(1)
+        val model = MBT.launch(null) // Should test that ._2 is 0 before cont.
+	if(model._2 != 0) {
           return (null, 1)
         }
         val result = exploreModel(model._1)
-	    MBT.cleanup()
-	    (result, 0)
+	MBT.cleanup()
+	(result, 0)
       }
     }
   }
@@ -292,12 +291,12 @@ object Modbat {
 	    err = new PrintStream(new FileOutputStream(errFile), true)
 	    System.setErr(err)
       } else {
-	    Console.println
+            Console.println
       }
       MBT.checkDuplicates = (i == 1)
       val (result, ret) = runTest
       if(ret == 1) { 
-        return 1
+            return 1
       }
       count = i
       restoreChannels
